@@ -80,6 +80,8 @@ func subcommandGet() {
 		getFallback(rawInput)
 	}
 	cmd := exec.Command(helperExe, constants.HelperSubcommandGet)
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, fmt.Sprintf("%s=1", constants.EnvVarDockerCredentialMagicChild))
 	cmd.Stdin = strings.NewReader(rawInput)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -179,6 +181,12 @@ func getFallback(rawInput string) {
 
 	if fallback == "" {
 		// If no match and no fallback, send the anonymous token response
+		fmt.Print(constants.AnonymousTokenResponse)
+		os.Exit(0)
+	}
+
+	if isChild := os.Getenv(constants.EnvVarDockerCredentialMagicChild); isChild != "" {
+		// If we've originated from magic itself, prevent an endless loop
 		fmt.Print(constants.AnonymousTokenResponse)
 		os.Exit(0)
 	}
