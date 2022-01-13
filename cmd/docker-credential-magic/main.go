@@ -80,8 +80,6 @@ func subcommandGet() {
 		getFallback(rawInput)
 	}
 	cmd := exec.Command(helperExe, constants.HelperSubcommandGet)
-	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, fmt.Sprintf("%s=1", constants.EnvVarDockerCredentialMagicChild))
 	cmd.Stdin = strings.NewReader(rawInput)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -165,6 +163,7 @@ func subcommandVersion() {
 }
 
 func getFallback(rawInput string) {
+
 	var fallback string
 
 	// If DOCKER_ORIG_CONFIG set, fallback to that
@@ -185,23 +184,29 @@ func getFallback(rawInput string) {
 		os.Exit(0)
 	}
 
-	if isChild := os.Getenv(constants.EnvVarDockerCredentialMagicChild); isChild != "" {
-		// If we've originated from magic itself, prevent an endless loop
-		fmt.Print(constants.AnonymousTokenResponse)
-		os.Exit(0)
-	}
-
 	cf, err := config.Load(fallback)
 	if err != nil {
 		fmt.Printf("[magic] loading fallback config \"%s\": %s\n", fallback, err.Error())
 		os.Exit(1)
 	}
+
+	// In the following 2 scenarios we could end up with an endless loop, so short circuit
+	if cf.CredentialsStore == constants.MagicCredentialSuffix {
+		fmt.Print(constants.AnonymousTokenResponse)
+		os.Exit(0)
+	}
+	if v, ok := cf.CredentialHelpers[rawInput]; ok && v == constants.MagicCredentialSuffix {
+		fmt.Print(constants.AnonymousTokenResponse)
+		os.Exit(0)
+	}
+
 	cfg, err := cf.GetAuthConfig(rawInput)
 	if err != nil {
 		fmt.Printf("[magic] get auth config for domain: %s\n", err.Error())
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
+
 	creds := toCreds(&authn.AuthConfig{
 		Username:      cfg.Username,
 		Password:      cfg.Password,

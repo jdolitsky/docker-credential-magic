@@ -10,7 +10,6 @@ const (
 	EmbeddedParentDir                 = "embedded"
 	EnvVarDockerConfig                = "DOCKER_CONFIG"
 	EnvVarDockerCredentialMagicConfig = "DOCKER_CREDENTIAL_MAGIC_CONFIG"
-	EnvVarDockerCredentialMagicChild  = "DOCKER_CREDENTIAL_MAGIC_CHILD"
 	EnvVarDockerOrigConfig            = "DOCKER_ORIG_CONFIG"
 	EnvVarPath                        = "PATH"
 	ExtensionYAML                     = "yml"
